@@ -1,0 +1,3 @@
+rootProject.name = 'credit-system'
+
+include 'ms-credit'

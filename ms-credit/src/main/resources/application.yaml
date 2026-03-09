@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: ms-credit
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      bindings:
+        creditRequested-out-0:
+          destination: credit-requested
+          content-type: application/json
+
+server:
+  port: 8081
+
+# Configurações customizadas
+credit:
+  rate-limit:
+    max-requests: 3
+    window-hours: 24
