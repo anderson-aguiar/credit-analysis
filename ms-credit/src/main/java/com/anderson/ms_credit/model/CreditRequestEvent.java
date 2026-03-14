@@ -9,6 +9,5 @@ public record CreditRequestEvent(
         BigDecimal amount,
         Integer installments,
         String purpose,
-        String status,
         LocalDateTime timestamp
 ) {}

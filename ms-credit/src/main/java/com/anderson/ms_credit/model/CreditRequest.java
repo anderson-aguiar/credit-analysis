@@ -18,6 +18,6 @@ public record CreditRequest(
         Integer installments,
 
         @NotNull(message = "Credit Purpose cannot be null")
-        CreditPurpose creditPurpose
+        CreditPurpose purpose
 ) {
 }
