@@ -1,4 +1,4 @@
-package com.anderson.ms_credit.model;
+package com.anderson.mscredit.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

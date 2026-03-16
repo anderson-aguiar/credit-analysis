@@ -1,6 +1,6 @@
-package com.anderson.ms_credit.kafka;
+package com.anderson.mscredit.kafka;
 
-import com.anderson.ms_credit.model.CreditRequestEvent;
+import com.anderson.mscredit.model.CreditRequestEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.stream.function.StreamBridge;

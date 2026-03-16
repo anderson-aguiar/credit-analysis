@@ -1,9 +1,9 @@
-package com.anderson.ms_credit.service;
+package com.anderson.mscredit.service;
 
-import com.anderson.ms_credit.kafka.CreditRequestProducer;
-import com.anderson.ms_credit.model.CreditRequest;
-import com.anderson.ms_credit.model.CreditRequestEvent;
-import com.anderson.ms_credit.model.CreditResponse;
+import com.anderson.mscredit.kafka.CreditRequestProducer;
+import com.anderson.mscredit.model.CreditRequest;
+import com.anderson.mscredit.model.CreditRequestEvent;
+import com.anderson.mscredit.model.CreditResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

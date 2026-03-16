@@ -1,4 +1,4 @@
-package com.anderson.ms_credit;
+package com.anderson.mscredit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

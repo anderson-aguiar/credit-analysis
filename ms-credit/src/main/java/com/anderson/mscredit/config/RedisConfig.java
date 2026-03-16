@@ -1,4 +1,4 @@
-package com.anderson.ms_credit.config;
+package com.anderson.mscredit.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.anderson.ms_credit.model;
+package com.anderson.mscredit.model;
 
 public enum CreditPurpose {
 

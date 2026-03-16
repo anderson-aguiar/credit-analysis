@@ -1,6 +1,6 @@
-package com.anderson.ms_credit.service;
+package com.anderson.mscredit.service;
 
-import com.anderson.ms_credit.repository.RateLimitRepository;
+import com.anderson.mscredit.repository.RateLimitRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

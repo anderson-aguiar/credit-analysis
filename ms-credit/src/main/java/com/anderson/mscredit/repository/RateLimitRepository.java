@@ -1,4 +1,4 @@
-package com.anderson.ms_credit.repository;
+package com.anderson.mscredit.repository;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;

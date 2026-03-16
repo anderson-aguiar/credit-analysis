@@ -1,4 +1,4 @@
-package com.anderson.ms_credit;
+package com.anderson.mscredit;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
