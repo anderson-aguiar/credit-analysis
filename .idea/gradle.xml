@@ -9,6 +9,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/ms-credit" />
+            <option value="$PROJECT_DIR$/ms-scoring" />
           </set>
         </option>
       </GradleProjectSettings>
