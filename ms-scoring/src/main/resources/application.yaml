@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: ms-scoring
+
+  # Configuração do MongoDB
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/credit-db
+      auto-index-creation: true
+
+    # Configuração do Redis (Cache de Score)
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    stream:
+      # Define Kafka como binder padrão
+      default-binder: kafka
+
+      kafka:
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+          auto-create-topics: true
+          required-acks: 1
+
+      bindings:
+        # Consumer: Escuta o evento de solicitação de crédito
+        processCreditRequest-in-0:
+          destination: credit-requested
+          group: scoring-group
+          content-type: application/json
+
+server:
+  port: 8082
+
+# Configurações customizadas para cálculo de score
+scoring:
+  cache:
+    ttl-hours: 24
+  weights:
+    payment-history: 0.40
+    income: 0.30
+    debt: 0.20
+    relationship: 0.10
