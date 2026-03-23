@@ -14,7 +14,7 @@ public class RateLimitService {
     @Value("${credit.rate-limit.window-hours}")
     private Long windowHour;
 
-    public RateLimitService(RateLimitRepository rateLimitRepository, Integer maxRequests, Long windowHour) {
+    public RateLimitService(RateLimitRepository rateLimitRepository) {
         this.rateLimitRepository = rateLimitRepository;
 
     }

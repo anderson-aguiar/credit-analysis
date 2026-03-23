@@ -7,7 +7,6 @@ import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Component;
 
 @Component
-
 public class CreditRequestProducer {
     private static final Logger log = LoggerFactory.getLogger(CreditRequestProducer.class);
     private final StreamBridge streamBridge;
