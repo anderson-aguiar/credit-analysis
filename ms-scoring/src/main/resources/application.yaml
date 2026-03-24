@@ -5,8 +5,10 @@ spring:
   # Configuração do MongoDB
   data:
     mongodb:
-      uri: mongodb://localhost:27017/credit-db
-      auto-index-creation: true
+      host: localhost
+      port: 27017
+      database: credit-db
+      auto-index-creation: false
 
     # Configuração do Redis (Cache de Score)
     redis:

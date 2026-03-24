@@ -5,6 +5,9 @@
       <module name="credit-system.ms-credit" options="-parameters" />
       <module name="credit-system.ms-credit.main" options="-parameters" />
       <module name="credit-system.ms-credit.test" options="-parameters" />
+      <module name="credit-system.ms-scoring" options="-parameters" />
+      <module name="credit-system.ms-scoring.main" options="-parameters" />
+      <module name="credit-system.ms-scoring.test" options="-parameters" />
       <module name="ms-credit" options="-parameters" />
       <module name="ms-credit.main" options="-parameters" />
       <module name="ms-credit.test" options="-parameters" />
