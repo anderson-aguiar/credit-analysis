@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: ms-fraud
+  # PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fraud_db
+    username: postgres
+    password: postgres123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  cloud:
+    stream:
+      default-binder: kafka
+
+      kafka:
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+          auto-create-topics: true
+
+      bindings:
+      # Não vai consumir Kafka diretamente
+      # Será chamado via REST pelo Camunda
+
+server:
+  port: 8083
+
+# Configurações de validação de fraude
+fraud:
+  validation:
+    max-amount-ratio: 2.0
+    min-income-ratio: 0.3
