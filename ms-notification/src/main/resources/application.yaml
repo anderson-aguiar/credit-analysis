@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: ms-notification
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: notifications-db
+      auto-index-creation: false
+
+  cloud:
+    stream:
+      default-binder: kafka
+
+      kafka:
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+          auto-create-topics: true
+
+      bindings:
+        processCreditDecision-in-0:
+          destination: credit-decided
+          group: notifications-group
+          content-type: application/json
+
+server:
+  port: 8084
