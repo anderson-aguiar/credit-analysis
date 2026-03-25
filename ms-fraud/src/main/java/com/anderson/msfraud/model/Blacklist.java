@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "blacklist")
-public class BlackList {
+public class Blacklist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,10 +16,10 @@ public class BlackList {
     @Column(nullable = false, length = 255) String reason;
     LocalDateTime addedAt;
 
-    public BlackList() {
+    public Blacklist() {
     }
 
-    public BlackList(Long id, String customerId, String cpf, String reason,
+    public Blacklist(Long id, String customerId, String cpf, String reason,
                      LocalDateTime addedAt) {
         this.id = id;
         this.customerId = customerId;

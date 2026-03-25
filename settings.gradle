@@ -2,3 +2,4 @@ rootProject.name = 'credit-system'
 
 include 'ms-credit'
 include 'ms-scoring'
+include 'ms-fraud'
