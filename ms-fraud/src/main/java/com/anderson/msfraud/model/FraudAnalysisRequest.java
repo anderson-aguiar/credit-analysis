@@ -1,29 +1,36 @@
 package com.anderson.msfraud.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import org.hibernate.validator.constraints.br.CPF;
 
 import java.math.BigDecimal;
 
 public record FraudAnalysisRequest(
-        @NotBlank
+        @JsonProperty("requestId")
+        @NotBlank(message = "Request ID is required")
         String requestId,
 
-        @NotBlank
+        @JsonProperty("customerId")
+        @NotBlank(message = "Customer ID is required")
         String customerId,
 
-        @NotNull
-        @Positive(message = "Valor deve ser positivo")
+        @JsonProperty("amount")
+        @NotNull(message = "Amount is required")
+        @Positive(message = "Amount must be positive")
         BigDecimal amount,
 
-        @NotNull
-        @Positive(message = "Valor deve ser positivo")
+        @JsonProperty("declaredIncome")
+        @NotNull(message = "Declared income is required")
+        @Positive(message = "Income must be positive")
         BigDecimal declaredIncome,
 
-        @NotBlank(message = "CPF deve ser válido")
-        @CPF
+        @JsonProperty("cpf")
+        @NotBlank(message = "CPF is required")
         String cpf
 ) {
+    @JsonCreator
+    public FraudAnalysisRequest {}
 }

@@ -25,7 +25,7 @@ spring:
           brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
           auto-create-topics: true
 
-      bindings:
+      bindings: {}
       # Não vai consumir Kafka diretamente
       # Será chamado via REST pelo Camunda
 

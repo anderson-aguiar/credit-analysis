@@ -22,7 +22,7 @@ public class FraudAnalysisService {
     private final FraudValidator fraudValidationChain;
     private final FraudAnalysisRepository repository;
 
-    public FraudAnalysisService(FraudValidator fraudValidator, FraudValidator fraudValidationChain, FraudAnalysisRepository repository) {
+    public FraudAnalysisService(FraudValidator fraudValidationChain, FraudAnalysisRepository repository) {
         this.fraudValidationChain = fraudValidationChain;
         this.repository = repository;
     }
