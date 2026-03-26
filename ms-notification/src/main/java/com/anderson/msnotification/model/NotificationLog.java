@@ -1,5 +1,6 @@
 package com.anderson.msnotification.model;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 @Document(collection = "notifications")
 public class NotificationLog {
 
+    @Id
     private String id;
     private String customerId;
     private String message;
