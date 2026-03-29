@@ -26,12 +26,16 @@ spring:
           auto-create-topics: true
           required-acks: 1
 
-      bindings:
-        # Consumer: Escuta o evento de solicitação de crédito
-        processCreditRequest-in-0:
-          destination: credit-requested
-          group: scoring-group
-          content-type: application/json
+      bindings: {}
+
+camunda:
+  bpm:
+    client:
+      base-url: http://localhost:8080/engine-rest
+      lock-duration: 60000
+      async-response-timeout: 10000
+      worker-id: ms-scoring-worker
+      max-tasks: 10
 
 server:
   port: 8082
