@@ -2,6 +2,9 @@
 <project version="4">
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="credit-system.camunda" options="-parameters" />
+      <module name="credit-system.camunda.main" options="-parameters" />
+      <module name="credit-system.camunda.test" options="-parameters" />
       <module name="credit-system.ms-credit" options="-parameters" />
       <module name="credit-system.ms-credit.main" options="-parameters" />
       <module name="credit-system.ms-credit.test" options="-parameters" />
