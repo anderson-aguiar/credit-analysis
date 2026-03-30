@@ -1,0 +1,66 @@
+[
+  {
+    "customerId": "customer-vip-001",
+    "totalAmount": 120000.00,
+    "totalInstallments": 180,
+    "latePayments": 0,
+    "lastCreditDate": "2025-02-15T10:00:00",
+    "relationshipMonths": 36
+  },
+  {
+    "customerId": "customer-good-001",
+    "totalAmount": 65000.00,
+    "totalInstallments": 90,
+    "latePayments": 2,
+    "lastCreditDate": "2025-01-20T14:30:00",
+    "relationshipMonths": 24
+  },
+  {
+    "customerId": "customer-regular-001",
+    "totalAmount": 28000.00,
+    "totalInstallments": 48,
+    "latePayments": 5,
+    "lastCreditDate": "2024-11-10T09:15:00",
+    "relationshipMonths": 15
+  },
+  {
+    "customerId": "customer-new-001",
+    "totalAmount": 8000.00,
+    "totalInstallments": 18,
+    "latePayments": 1,
+    "lastCreditDate": "2024-08-05T11:00:00",
+    "relationshipMonths": 7
+  },
+  {
+    "customerId": "customer-problem-001",
+    "totalAmount": 15000.00,
+    "totalInstallments": 36,
+    "latePayments": 12,
+    "lastCreditDate": "2024-06-20T16:45:00",
+    "relationshipMonths": 18
+  },
+  {
+    "customerId": "customer-premium-001",
+    "totalAmount": 250000.00,
+    "totalInstallments": 240,
+    "latePayments": 0,
+    "lastCreditDate": "2025-03-01T08:00:00",
+    "relationshipMonths": 48
+  },
+  {
+    "customerId": "customer-intermediate-001",
+    "totalAmount": 42000.00,
+    "totalInstallments": 60,
+    "latePayments": 3,
+    "lastCreditDate": "2024-12-15T13:20:00",
+    "relationshipMonths": 20
+  },
+  {
+    "customerId": "customer-recent-001",
+    "totalAmount": 12000.00,
+    "totalInstallments": 24,
+    "latePayments": 0,
+    "lastCreditDate": "2025-01-10T10:30:00",
+    "relationshipMonths": 10
+  }
+]

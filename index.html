@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificações de Crédito (SSE)</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .log-box { background: #333; color: #0f0; padding: 15px; border-radius: 5px; height: 300px; overflow-y: auto; margin-top: 20px; font-family: monospace; }
+        input, button { padding: 10px; margin-top: 10px; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Painel do Cliente - SSE</h2>
+
+    <label for="customerId">ID do Cliente:</label><br>
+    <input type="text" id="customerId" value="customer-vip-001" size="30">
+    <button onclick="conectarSSE()">Conectar via SSE</button>
+    <button onclick="desconectarSSE()" style="background-color: #dc3545;">Desconectar</button>
+
+    <div class="log-box" id="mensagens">
+        <i>Aguardando conexão...</i><br>
+    </div>
+</div>
+
+<script>
+    let eventSource;
+
+    function conectarSSE() {
+        const customerId = document.getElementById("customerId").value;
+        if (!customerId) return alert("Digite o ID do cliente!");
+
+        // Fecha conexão anterior se existir
+        if (eventSource) eventSource.close();
+
+        const url = `http://localhost:8084/api/v1/notifications/stream/${customerId}`;
+        log(`Conectando em: ${url}...`);
+
+        eventSource = new EventSource(url);
+
+        eventSource.onopen = function() {
+            log("✅ Conectado com sucesso! Aguardando decisão de crédito...");
+        };
+
+        // Escuta o evento com nome "credit-decision" (conforme configurado no seu SSEService)
+        eventSource.addEventListener("credit-decision", function(event) {
+            log("🔔 NOVA NOTIFICAÇÃO RECEBIDA:");
+            log("Mensagem: " + event.data);
+        });
+
+        eventSource.onerror = function(error) {
+            log("❌ Erro na conexão SSE ou conexão fechada pelo servidor.");
+            eventSource.close();
+        };
+    }
+
+    function desconectarSSE() {
+        if (eventSource) {
+            eventSource.close();
+            log("🔌 Desconectado manualmente.");
+        }
+    }
+
+    function log(msg) {
+        const div = document.getElementById("mensagens");
+        const time = new Date().toLocaleTimeString();
+        div.innerHTML += `[${time}] ${msg}<br>`;
+        div.scrollTop = div.scrollHeight; // Rola para o final
+    }
+</script>
+
+</body>
+</html>
