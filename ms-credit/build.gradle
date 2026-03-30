@@ -1,7 +1,10 @@
+import groovy.lang.Closure
+
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '4.0.3'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '4.0.3'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.anderson'
@@ -9,38 +12,77 @@ version = '0.0.1-SNAPSHOT'
 description = 'MS-CREDIT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 ext {
-	set('springCloudVersion', "2025.1.0")
+    set('springCloudVersion', "2025.1.0")
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-session-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-stream'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka'
-	testImplementation 'org.springframework.boot:spring-boot-starter-session-data-redis-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect(({
+            fileTree(dir: it, exclude: [
+                    '**/MsCreditApplication.class',
+                    '**/*Request*.class',
+                    '**/*Response*.class',
+                    '**/*Event*.class',
+                    '**/config/**'
+            ])
+        } as Closure<Object>))))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.65
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
