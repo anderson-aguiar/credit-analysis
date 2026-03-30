@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0npfp0h" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
+  <bpmn:process id="creditProcess" name="Credit Process" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_0odw3ag</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="Gateway_184eq23">
+      <bpmn:incoming>Flow_0odw3ag</bpmn:incoming>
+      <bpmn:outgoing>Flow_12zsvri</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0i1mqhc</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_0odw3ag" sourceRef="StartEvent_1" targetRef="Gateway_184eq23" />
+    <bpmn:serviceTask id="calculateScoreTask" name="Calculate Score" camunda:asyncBefore="true" camunda:type="external" camunda:topic="scoringTask">
+      <bpmn:documentation>Worker em ms-scoring calcula score e finaliza com variável 'score' (Integer)</bpmn:documentation>
+      <bpmn:incoming>Flow_12zsvri</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fv5o10</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="analyzeFraudTask" name="Analyze Fraud" camunda:asyncBefore="true" camunda:type="external" camunda:topic="fraudTask">
+      <bpmn:documentation>Worker em ms-fraud avalia e retorna isFraud (Boolean) e fraudReason (String)</bpmn:documentation>
+      <bpmn:incoming>Flow_0i1mqhc</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qyre93</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="Gateway_0tue18n">
+      <bpmn:incoming>Flow_0fv5o10</bpmn:incoming>
+      <bpmn:incoming>Flow_0qyre93</bpmn:incoming>
+      <bpmn:outgoing>Flow_0dsb1jn</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_12zsvri" sourceRef="Gateway_184eq23" targetRef="calculateScoreTask" />
+    <bpmn:sequenceFlow id="Flow_0i1mqhc" sourceRef="Gateway_184eq23" targetRef="analyzeFraudTask" />
+    <bpmn:sequenceFlow id="Flow_0fv5o10" sourceRef="calculateScoreTask" targetRef="Gateway_0tue18n" />
+    <bpmn:sequenceFlow id="Flow_0qyre93" sourceRef="analyzeFraudTask" targetRef="Gateway_0tue18n" />
+    <bpmn:exclusiveGateway id="Gateway_1s4vywo" name="Decision" default="Flow_1ff3x43">
+      <bpmn:incoming>Flow_0dsb1jn</bpmn:incoming>
+      <bpmn:outgoing>Flow_0160fh9</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1ff3x43</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0315gx8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0160fh9" name="REJECT" sourceRef="Gateway_1s4vywo" targetRef="publishDecisionTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${isFraud == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1ff3x43" name="MANUAL REVIEW" sourceRef="Gateway_1s4vywo" targetRef="manualRewiewTask">
+      <bpmn:extensionElements />
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0dsb1jn" sourceRef="Gateway_0tue18n" targetRef="Gateway_1s4vywo" />
+    <bpmn:serviceTask id="publishDecisionTask" name="Publish Decision" camunda:asyncBefore="true" camunda:type="external" camunda:topic="publishDecisionTask">
+      <bpmn:extensionElements />
+      <bpmn:incoming>Flow_0160fh9</bpmn:incoming>
+      <bpmn:incoming>Flow_0315gx8</bpmn:incoming>
+      <bpmn:incoming>Flow_1dfnefg</bpmn:incoming>
+      <bpmn:outgoing>Flow_01ysrbf</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0315gx8" name="APPROVED" sourceRef="Gateway_1s4vywo" targetRef="publishDecisionTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${isFraud == false &amp;&amp; score &gt;= 700}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:userTask id="manualRewiewTask" name="Manual Review" camunda:assignee="admin">
+      <bpmn:incoming>Flow_1ff3x43</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dfnefg</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1dfnefg" sourceRef="manualRewiewTask" targetRef="publishDecisionTask">
+      <bpmn:extensionElements />
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_0z5nng1">
+      <bpmn:incoming>Flow_01ysrbf</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_01ysrbf" sourceRef="publishDecisionTask" targetRef="Event_0z5nng1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="creditProcess">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="190" y="215" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0677g3g_di" bpmnElement="Gateway_184eq23">
+        <dc:Bounds x="315" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="374.5" y="183" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_167a33w_di" bpmnElement="calculateScoreTask">
+        <dc:Bounds x="480" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0c2csy4_di" bpmnElement="analyzeFraudTask">
+        <dc:Bounds x="480" y="230" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_02argrs_di" bpmnElement="Gateway_0tue18n">
+        <dc:Bounds x="705" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="679" y="183" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1s4vywo_di" bpmnElement="Gateway_1s4vywo" isMarkerVisible="true">
+        <dc:Bounds x="865" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="838" y="153" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_14zff6k_di" bpmnElement="publishDecisionTask">
+        <dc:Bounds x="1020" y="90" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1bfskd4_di" bpmnElement="manualRewiewTask">
+        <dc:Bounds x="1020" y="270" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0z5nng1_di" bpmnElement="Event_0z5nng1">
+        <dc:Bounds x="1282" y="112" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0odw3ag_di" bpmnElement="Flow_0odw3ag">
+        <di:waypoint x="218" y="190" />
+        <di:waypoint x="315" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12zsvri_di" bpmnElement="Flow_12zsvri">
+        <di:waypoint x="340" y="165" />
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="480" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0i1mqhc_di" bpmnElement="Flow_0i1mqhc">
+        <di:waypoint x="340" y="215" />
+        <di:waypoint x="340" y="270" />
+        <di:waypoint x="480" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fv5o10_di" bpmnElement="Flow_0fv5o10">
+        <di:waypoint x="580" y="120" />
+        <di:waypoint x="730" y="120" />
+        <di:waypoint x="730" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qyre93_di" bpmnElement="Flow_0qyre93">
+        <di:waypoint x="580" y="270" />
+        <di:waypoint x="730" y="270" />
+        <di:waypoint x="730" y="215" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dsb1jn_di" bpmnElement="Flow_0dsb1jn">
+        <di:waypoint x="755" y="190" />
+        <di:waypoint x="865" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0160fh9_di" bpmnElement="Flow_0160fh9">
+        <di:waypoint x="890" y="165" />
+        <di:waypoint x="890" y="130" />
+        <di:waypoint x="1020" y="130" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="918" y="113" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ff3x43_di" bpmnElement="Flow_1ff3x43">
+        <di:waypoint x="890" y="215" />
+        <di:waypoint x="890" y="310" />
+        <di:waypoint x="1020" y="310" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="926" y="276" width="47" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0315gx8_di" bpmnElement="Flow_0315gx8">
+        <di:waypoint x="915" y="190" />
+        <di:waypoint x="1030" y="190" />
+        <di:waypoint x="1057" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="917" y="172" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dfnefg_di" bpmnElement="Flow_1dfnefg">
+        <di:waypoint x="1070" y="270" />
+        <di:waypoint x="1070" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01ysrbf_di" bpmnElement="Flow_01ysrbf">
+        <di:waypoint x="1120" y="130" />
+        <di:waypoint x="1282" y="130" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

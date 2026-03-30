@@ -38,6 +38,8 @@ public class CreditService {
                 request.amount(),
                 request.installments(),
                 request.purpose().name(),
+                request.cpf(),
+                request.declaredIncome(),
                 LocalDateTime.now()
         );
 

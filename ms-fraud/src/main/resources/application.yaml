@@ -29,6 +29,15 @@ spring:
       # Não vai consumir Kafka diretamente
       # Será chamado via REST pelo Camunda
 
+camunda:
+  bpm:
+    client:
+      base-url: http://localhost:8080/engine-rest
+      lock-duration: 60000
+      async-response-timeout: 10000
+      worker-id: ms-fraud-worker
+      max-tasks: 10
+
 server:
   port: 8083
 

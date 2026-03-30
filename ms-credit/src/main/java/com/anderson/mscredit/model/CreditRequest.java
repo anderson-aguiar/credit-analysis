@@ -18,6 +18,13 @@ public record CreditRequest(
         Integer installments,
 
         @NotNull(message = "Credit Purpose cannot be null")
-        CreditPurpose purpose
+        CreditPurpose purpose,
+
+        @NotBlank(message = "CPF is required")
+        String cpf,
+
+        @NotNull(message = "Declared income is required")
+        @Positive(message = "Declared income must be positive")
+        BigDecimal declaredIncome
 ) {
 }

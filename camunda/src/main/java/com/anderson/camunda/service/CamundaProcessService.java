@@ -35,6 +35,8 @@ public class CamundaProcessService {
         variables.put("installments", createVariable(event.installments(), "Integer"));
         variables.put("purpose", createVariable(event.purpose(), "String"));
         variables.put("timestamp", createVariable(event.timestamp().toString(), "String"));
+        variables.put("cpf", createVariable(event.cpf(), "String"));
+        variables.put("declaredIncome", createVariable(event.declaredIncome().doubleValue(), "Double"));
 
         payload.put("variables", variables);
         try {

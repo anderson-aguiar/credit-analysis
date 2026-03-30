@@ -9,5 +9,7 @@ public record CreditRequestEvent(
         BigDecimal amount,
         Integer installments,
         String purpose,
+        String cpf,
+        BigDecimal declaredIncome,
         LocalDateTime timestamp
 ) {}
