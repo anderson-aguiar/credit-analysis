@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.0.4'
 	id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.anderson'
@@ -36,6 +37,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -45,6 +49,46 @@ dependencyManagement {
 	}
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
+jacoco {
+    toolVersion = "0.8.11"
 }
+
+tasks.named('test') {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/MsFraudApplication.class',
+                    '**/*Request*.class',
+                    '**/*Response*.class',
+                    '**/*Event*.class',
+                    '**/entity/**',
+                    '**/config/**',
+                    '**/worker/**'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.65
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
