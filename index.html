@@ -16,7 +16,7 @@
 <body>
 
 <div class="container">
-    <h2>Painel do Cliente - SSE</h2>
+    <h2>Painel SSE</h2>
 
     <label for="customerId">ID do Cliente:</label><br>
     <input type="text" id="customerId" value="customer-vip-001" size="30">
@@ -35,7 +35,7 @@
         const customerId = document.getElementById("customerId").value;
         if (!customerId) return alert("Digite o ID do cliente!");
 
-        // Fecha conexão anterior se existir
+        // Fecha conexão
         if (eventSource) eventSource.close();
 
         const url = `http://localhost:8084/api/v1/notifications/stream/${customerId}`;
@@ -47,7 +47,7 @@
             log("✅ Conectado com sucesso! Aguardando decisão de crédito...");
         };
 
-        // Escuta o evento com nome "credit-decision" (conforme configurado no seu SSEService)
+        // Escuta o evento com nome "credit-decision" (conforme configurado no SSEService)
         eventSource.addEventListener("credit-decision", function(event) {
             log("🔔 NOVA NOTIFICAÇÃO RECEBIDA:");
             log("Mensagem: " + event.data);
