@@ -1,5 +1,6 @@
 package com.anderson.msfraud.service;
 
+import com.anderson.msfraud.config.FraudMetrics;
 import com.anderson.msfraud.model.FraudAnalysis;
 import com.anderson.msfraud.model.FraudAnalysisRequest;
 import com.anderson.msfraud.model.FraudAnalysisResponse;
@@ -21,10 +22,12 @@ public class FraudAnalysisService {
     private static final Logger log = LoggerFactory.getLogger(FraudAnalysisService.class);
     private final FraudValidator fraudValidationChain;
     private final FraudAnalysisRepository repository;
+    private final FraudMetrics metrics;
 
-    public FraudAnalysisService(FraudValidator fraudValidationChain, FraudAnalysisRepository repository) {
+    public FraudAnalysisService(FraudValidator fraudValidationChain, FraudAnalysisRepository repository, FraudMetrics metrics) {
         this.fraudValidationChain = fraudValidationChain;
         this.repository = repository;
+        this.metrics = metrics;
     }
 
     public FraudAnalysisResponse analyzeFraude(FraudAnalysisRequest request) {
@@ -38,9 +41,14 @@ public class FraudAnalysisService {
         int riskScore = 0;
 
         if (result.valid()) {
+            metrics.incrementApproved();
             status = FraudStatus.APPROVED;
         } else {
             status = FraudStatus.REJECTED;
+            metrics.incrementFraudDetected();
+            if (result.validatorName().equals("BlacklistValidator")) {
+                metrics.incrementBlacklistHits();
+            }
             riskScore = 100;
             failedValidators.add(result.validatorName());
             reason = result.reason();

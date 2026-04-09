@@ -1,3 +1,5 @@
+server:
+  port: 8083
 spring:
   application:
     name: ms-fraud
@@ -9,13 +11,14 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    # Dialeto explícito para evitar que o Hibernate tente adivinhar sem conexão
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-
   cloud:
     stream:
       default-binder: kafka
@@ -38,11 +41,39 @@ camunda:
       worker-id: ms-fraud-worker
       max-tasks: 10
 
-server:
-  port: 8083
 
 # Configurações de validação de fraude
 fraud:
   validation:
     max-amount-ratio: 2.0
     min-income-ratio: 0.3
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+# Informações da aplicação (aparece no /actuator/info)
+info:
+  app:
+    name: ${spring.application.name}
+    description: Credit Analysis System
+    version: 1.0.0

@@ -1,18 +1,24 @@
 package com.anderson.msnotification.service;
 
+import com.anderson.msnotification.config.NotificationMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
 
 class SSEServiceTest {
 
     private SSEService sseService;
+    private NotificationMetrics metrics; // Mock das métricas
 
     @BeforeEach
     void setUp() {
-        sseService = new SSEService();
+        // Criamos um mock para não precisar configurar o MeterRegistry real
+        metrics = Mockito.mock(NotificationMetrics.class);
+        sseService = new SSEService(metrics);
     }
 
     @Test
@@ -22,31 +28,30 @@ class SSEServiceTest {
 
         // Assert
         assertNotNull(emitter);
+        // Verifica se o serviço avisou as métricas que uma conexão abriu
+        verify(metrics).incrementActiveConnections();
     }
 
     @Test
     void shouldReturnDifferentEmittersForDifferentCustomers() {
-        // Act
         SseEmitter emitter1 = sseService.subscribe("customer-1");
         SseEmitter emitter2 = sseService.subscribe("customer-2");
 
-        // Assert
         assertNotEquals(emitter1, emitter2);
     }
 
     @Test
     void shouldReplaceEmitterWhenCustomerSubscribesAgain() {
-        // Act
         SseEmitter emitter1 = sseService.subscribe("customer-1");
         SseEmitter emitter2 = sseService.subscribe("customer-1");
 
-        // Assert
         assertNotEquals(emitter1, emitter2);
+        // Deve ter incrementado duas vezes (uma para cada subscribe)
+        verify(metrics, Mockito.times(2)).incrementActiveConnections();
     }
 
     @Test
     void shouldReturnTrueWhenNotificationIsSent() {
-        // Arrange
         sseService.subscribe("customer-1");
 
         // Act
@@ -54,6 +59,7 @@ class SSEServiceTest {
 
         // Assert
         assertTrue(result);
+        verify(metrics).incrementSent();
     }
 
     @Test
@@ -63,33 +69,28 @@ class SSEServiceTest {
 
         // Assert
         assertFalse(result);
+        verify(metrics).incrementFailed();
     }
 
     @Test
     void shouldSendNotificationToCorrectCustomer() {
-        // Arrange
         sseService.subscribe("customer-1");
         sseService.subscribe("customer-2");
 
-        // Act
-        boolean result1 = sseService.sendNotification("customer-1", "Message for customer 1");
-        boolean result2 = sseService.sendNotification("customer-2", "Message for customer 2");
+        boolean result1 = sseService.sendNotification("customer-1", "Message 1");
+        boolean result2 = sseService.sendNotification("customer-2", "Message 2");
 
-        // Assert
         assertTrue(result1);
         assertTrue(result2);
+        verify(metrics, Mockito.times(2)).incrementSent();
     }
 
     @Test
     void shouldHandleMultipleSubscribers() {
-        // Act
-        SseEmitter emitter1 = sseService.subscribe("customer-1");
-        SseEmitter emitter2 = sseService.subscribe("customer-2");
-        SseEmitter emitter3 = sseService.subscribe("customer-3");
+        assertNotNull(sseService.subscribe("customer-1"));
+        assertNotNull(sseService.subscribe("customer-2"));
+        assertNotNull(sseService.subscribe("customer-3"));
 
-        // Assert
-        assertNotNull(emitter1);
-        assertNotNull(emitter2);
-        assertNotNull(emitter3);
+        verify(metrics, Mockito.times(3)).incrementActiveConnections();
     }
 }

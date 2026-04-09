@@ -1,5 +1,6 @@
 package com.anderson.mscredit.service;
 
+import com.anderson.mscredit.config.CreditMetrics;
 import com.anderson.mscredit.kafka.CreditRequestProducer;
 import com.anderson.mscredit.model.CreditRequest;
 import com.anderson.mscredit.model.CreditRequestEvent;
@@ -16,17 +17,21 @@ public class CreditService {
     private static final Logger log = LoggerFactory.getLogger(CreditService.class);
     private final RateLimitService rateLimitService;
     private final CreditRequestProducer creditRequestProducer;
+    private final CreditMetrics metrics;
 
-    public CreditService(RateLimitService rateLimitService, CreditRequestProducer creditRequestProducer) {
+    public CreditService(RateLimitService rateLimitService, CreditRequestProducer creditRequestProducer, CreditMetrics metrics) {
         this.rateLimitService = rateLimitService;
         this.creditRequestProducer = creditRequestProducer;
+        this.metrics = metrics;
     }
 
     public CreditResponse processCreditRequest(CreditRequest request) {
         log.info("Processing credit request for customer: {}", request.customerId());
+        metrics.incrementTotalRequests();
 
         if (!rateLimitService.isAllowed(request.customerId())) {
             log.warn("Rate limit exceeded for customer: {}", request.customerId());
+            metrics.incrementRateLimitExceeded();
             throw new IllegalStateException("Rate limit exceeded. Maximum 3 requests per 24 hours.");
         }
 

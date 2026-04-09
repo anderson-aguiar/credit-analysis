@@ -1,0 +1,91 @@
+{
+  "title": "Credit Analysis System - Overview",
+  "uid": "credit-analysis-system-v1",
+  "schemaVersion": 36,
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "title": "Total de Requisições de Crédito", "type": "stat",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "targets": [{"expr": "sum(credit_requests_total{application=\"ms-credit\"})\n", "refId": "A"}]
+    },
+    {
+      "id": 2, "title": "Taxa de Aprovação", "type": "gauge",
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {
+          "expr": "((sum(credit_requests_approved_total{application=\"ms-notification\"}) or vector(0)) / (sum(credit_requests_total{application=\"ms-notification\"}) > 0 or vector(1))) * 100\n",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 3, "title": "Fraudes Detectadas", "type": "stat",
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+      "targets": [{"expr": "sum(fraud_detected_total) or vector(0)", "refId": "A"}],
+      "fieldConfig": { "defaults": { "color": {"mode": "thresholds"}, "thresholds": {"steps": [{"value": 0, "color": "green"}, {"value": 10, "color": "red"}]}}}
+    },
+    {
+      "id": 4, "title": "Cache Hit Rate (Scoring)", "type": "gauge",
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+      "targets": [{"expr": "(sum(scoring_cache_hits_total) or vector(0)) / ((sum(scoring_cache_hits_total) or vector(0)) + (sum(scoring_cache_misses_total) or vector(0) + 0.0001)) * 100", "refId": "A"}],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 5, "title": "Conexões SSE Ativas", "type": "stat",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 6},
+      "targets": [{"expr": "notifications_sse_active_connections", "refId": "A"}]
+    },
+    {
+      "id": 6, "title": "Sucesso de Entrega SSE", "type": "gauge",
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 6},
+      "targets": [{"expr": "((sum(rate(notifications_sent_total[1m])) or vector(0)) / ((sum(rate(notifications_sent_total[1m])) or vector(0)) + (sum(rate(notifications_failed_total[1m])) or vector(0)) + 0.0001)) * 100", "refId": "A"}],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 7, "title": "Falhas de Notificação (Acumulado)", "type": "stat",
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 6},
+      "targets": [{"expr": "sum(notifications_failed_total) or vector(0)", "refId": "A"}],
+      "fieldConfig": { "defaults": { "color": {"mode": "thresholds"}, "thresholds": {"steps": [{"value": 0, "color": "green"}, {"value": 1, "color": "red"}]}}}
+    },
+    {
+      "id": 8, "title": "Total Desconexões", "type": "stat",
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 6},
+      "targets": [{"expr": "sum(notifications_disconnected_total) or vector(0)", "refId": "A"}]
+    },
+    {
+      "id": 9, "title": "Histórico de Conexões e Desconexões", "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {"expr": "notifications_sse_active_connections", "legendFormat": "Ativas", "refId": "A"},
+        {"expr": "rate(notifications_disconnected_total[1m])", "legendFormat": "Desconexões/min", "refId": "B"}
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Volume de Requisições por Serviço",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [
+        {
+          "expr": "sum by (application) (rate(credit_requests_total[5m]))",
+          "legendFormat": "{{application}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (application) (rate(scoring_calculated_total[5m]))",
+          "legendFormat": "{{application}}",
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (application) (rate(fraud_detected_total[5m]))",
+          "legendFormat": "{{application}}",
+          "refId": "C"
+        }
+      ]
+    }
+  ]
+}
