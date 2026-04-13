@@ -1,0 +1,29 @@
+<form role="form">
+    <h3>📋 Revisão Manual</h3>
+
+    <div class="form-group">
+        <label>Request ID:</label>
+        <input type="text" cam-variable-name="requestId" cam-variable-type="String" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+        <label>Customer ID:</label>
+        <input type="text" cam-variable-name="customerId" cam-variable-type="String" class="form-control" readonly />
+    </div>
+
+    <div class="form-group">
+        <label>Score:</label>
+        <input type="number" cam-variable-name="score" cam-variable-type="Integer" class="form-control" readonly />
+    </div>
+
+    <hr>
+
+    <div class="form-group">
+        <label><strong>Decisão:</strong></label>
+        <select cam-variable-name="decision" cam-variable-type="String" class="form-control" required>
+            <option value="">Selecione</option>
+            <option value="APPROVED">✅ Aprovar</option>
+            <option value="REJECTED">❌ Rejeitar</option>
+        </select>
+    </div>
+</form>

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -53,23 +54,46 @@ public class NotificationService {
 
     private String customMessage(CreditDecisionEvent event) {
         String status = event.status() != null ? event.status() : "";
+
+        String reqId = event.requestId() != null ? event.requestId().substring(0, 8) : "N/A";
+
         switch (status.toUpperCase()) {
             case "APPROVED" -> {
                 BigDecimal approved = event.approvedAmount();
                 String value = (approved != null)
                         ? NumberFormat.getCurrencyInstance(new Locale("pt", "BR")).format(approved)
                         : "valor não informado";
-                return "Parabéns! Seu crédito de " + value + " foi aprovado!";
+
+                return "[" + reqId + "] Parabéns! Seu crédito de " + value + " foi aprovado!";
             }
             case "REJECTED" -> {
                 String reason = event.reason() != null ? event.reason() : "motivo não informado";
-                return "Infelizmente seu crédito foi rejeitado. Motivo: " + reason + ".";
+                return "[" + reqId + "] Infelizmente seu crédito foi rejeitado. Motivo: " + reason + ".";
             }
             case "MANUAL_REVIEW" -> {
-                return "Sua solicitação está em análise manual. Em breve retornaremos.";
+                return "[" + reqId + "] Sua solicitação está em análise manual. Em breve retornaremos.";
             }
             default -> {
-                return "Atualização de crédito: status desconhecido.";
+                return "[" + reqId + "] Atualização de crédito: status desconhecido.";
+            }
+        }
+    }
+
+    public void sendPendingNotifications(String customerId) {
+        // Busca todas as notificações não entregues deste cliente
+        List<NotificationLog> pending = notificationRepository.findByCustomerIdAndDeliveredFalse(customerId);
+
+        for (NotificationLog logEntry : pending) {
+            log.info("Reenviando notificação pendente para cliente: {}", customerId);
+
+            // Tenta enviar via SSE
+            boolean sent = sseService.sendNotification(customerId, logEntry.getMessage());
+
+            if (sent) {
+                // Atualiza o registro existente
+                logEntry.setDelivered(true);
+                logEntry.setSentAt(LocalDateTime.now());
+                notificationRepository.save(logEntry);
             }
         }
     }

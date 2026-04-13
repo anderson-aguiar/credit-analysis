@@ -5,6 +5,10 @@ import com.anderson.msnotification.repository.NotificationRepository;
 import com.anderson.msnotification.service.SSEService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -32,8 +36,13 @@ public class NotificationController {
     }
 
     @GetMapping("/history/{customerId}")
-    public List<NotificationLog> getHistory(@PathVariable String customerId) {
-        log.info("Buscando histórico para o cliente {}", customerId);
-        return notificationRepository.findByCustomerIdOrderBySentAtDesc(customerId);
+    public Page<NotificationLog> getHistory(
+            @PathVariable String customerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+
+        log.info("Buscando histórico paginado para o cliente {} - Página {}", customerId, page);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("sentAt").descending());
+        return notificationRepository.findByCustomerId(customerId, pageable);
     }
 }

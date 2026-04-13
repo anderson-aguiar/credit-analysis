@@ -3,76 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notificações de Crédito (SSE)</title>
+    <title>Credit Analysis - Service Center</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .log-box { background: #333; color: #0f0; padding: 15px; border-radius: 5px; height: 300px; overflow-y: auto; margin-top: 20px; font-family: monospace; }
-        input, button { padding: 10px; margin-top: 10px; font-size: 16px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button:hover { background-color: #0056b3; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f0f2f5; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 900px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2, h3 { color: #333; margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 8px; margin-bottom: 20px; }
+        .section { background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #eaeaea; margin-bottom: 30px; }
+        .controls { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 15px; }
+        .field-group { flex-grow: 1; min-width: 200px; }
+        label { font-size: 12px; font-weight: bold; color: #666; text-transform: uppercase; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; margin-top: 5px; }
+        button { padding: 10px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 6px; color: white; transition: 0.2s; }
+        .btn-connect { background-color: #007bff; }
+        .btn-history { background-color: #6c757d; }
+        .btn-disconnect { background-color: #dc3545; }
+        .btn-clear { background-color: #f8f9fa; color: #333; border: 1px solid #ccc; }
+        button:hover { opacity: 0.8; }
+        .log-box { background: #1e1e1e; color: #dcdcdc; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 13px; }
+        .history-container { background: #fff; border: 1px solid #ddd; border-radius: 8px; max-height: 400px; overflow-y: auto; min-height: 50px; }
+        .history-item { border-bottom: 1px solid #eee; padding: 12px; font-size: 14px; display: flex; align-items: center; gap: 15px; }
+        .history-item:last-child { border-bottom: none; }
+        .tag { font-size: 10px; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; min-width: 65px; text-align: center; }
+        .tag-ok { background: #d4edda; color: #155724; }
+        .tag-fail { background: #f8d7da; color: #721c24; }
+        .load-more-container { text-align: center; padding: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Painel SSE</h2>
+    <div class="section">
+        <h2>Monitoramento Conexão SSE</h2>
+        <div class="controls">
+            <div class="field-group">
+                <label>ID do Cliente:</label>
+                <input type="text" id="customerIdSSE" value="customer-vip-001">
+            </div>
+            <button class="btn-connect" onclick="conectarSSE()">Conectar SSE</button>
+            <button class="btn-disconnect" onclick="desconectarSSE()">Encerrar</button>
+            <button class="btn-clear" onclick="limparLogSSE()">Limpar Tela</button>
+        </div>
+        <div class="log-box" id="logSSE">
+            <span style="color: #888;">Nenhuma conexão ativa...</span>
+        </div>
+    </div>
 
-    <label for="customerId">ID do Cliente:</label><br>
-    <input type="text" id="customerId" value="customer-vip-001" size="30">
-    <button onclick="conectarSSE()">Conectar via SSE</button>
-    <button onclick="desconectarSSE()" style="background-color: #dc3545;">Desconectar</button>
+    <div class="section">
+        <h3>Auditoria de Histórico (MongoDB)</h3>
+        <div class="controls">
+            <div class="field-group">
+                <label>ID do Cliente para Pesquisa:</label>
+                <input type="text" id="customerIdHistory" value="customer-new-004">
+            </div>
+            <button class="btn-history" onclick="resetarEBucarHistorico()">Buscar no Banco</button>
+            <button class="btn-clear" onclick="limparHistorico()">Limpar Busca</button>
+        </div>
 
-    <div class="log-box" id="mensagens">
-        <i>Aguardando conexão...</i><br>
+        <div class="history-container" id="listaHistorico">
+            <div style="padding: 20px; color: #999; text-align: center;">Digite um ID e clique em buscar...</div>
+        </div>
+        <div class="load-more-container" id="containerLoadMore" style="display: none;">
+            <button class="btn-history" onclick="carregarHistorico()">Carregar Mais Resultados</button>
+        </div>
     </div>
 </div>
 
 <script>
     let eventSource;
+    let currentPage = 0;
+    const pageSize = 5;
+
+
+    function formatarDataBR(dataIso) {
+        const data = dataIso ? new Date(dataIso) : new Date();
+        return data.toLocaleString('pt-BR');
+    }
+
+    function logSSE(msg, color = "#dcdcdc") {
+        const div = document.getElementById("logSSE");
+        const time = formatarDataBR();
+        div.innerHTML += `<div style="color: ${color}; margin-bottom: 5px;"><span style="color: #808080">[${time}]</span> ${msg}</div>`;
+        div.scrollTop = div.scrollHeight;
+    }
 
     function conectarSSE() {
-        const customerId = document.getElementById("customerId").value;
-        if (!customerId) return alert("Digite o ID do cliente!");
-
-        // Fecha conexão
+        const id = document.getElementById("customerIdSSE").value;
+        if (!id) return alert("ID do monitoramento necessário");
         if (eventSource) eventSource.close();
 
-        const url = `http://localhost:8084/api/v1/notifications/stream/${customerId}`;
-        log(`Conectando em: ${url}...`);
+        eventSource = new EventSource(`http://localhost:8084/api/v1/notifications/stream/${id}`);
+        document.getElementById("logSSE").innerHTML = "";
+        logSSE(`Tentando conectar ao stream do cliente: ${id}...`, "#569cd6");
 
-        eventSource = new EventSource(url);
-
-        eventSource.onopen = function() {
-            log("✅ Conectado com sucesso! Aguardando decisão de crédito...");
-        };
-
-        // Escuta o evento com nome "credit-decision" (conforme configurado no SSEService)
-        eventSource.addEventListener("credit-decision", function(event) {
-            log("🔔 NOVA NOTIFICAÇÃO RECEBIDA:");
-            log("Mensagem: " + event.data);
-        });
-
-        eventSource.onerror = function(error) {
-            log("❌ Erro na conexão SSE ou conexão fechada pelo servidor.");
-            eventSource.close();
-        };
+        eventSource.onopen = () => logSSE(`✅ Conexão estabelecida para ${id}`, "#4ec9b0");
+        eventSource.addEventListener("credit-decision", (e) => logSSE("🔔 NOTIFICAÇÃO: " + e.data, "#ce9178"));
+        eventSource.onerror = () => { logSSE("❌ Conexão encerrada pelo servidor.", "#f44747"); eventSource.close(); };
     }
 
     function desconectarSSE() {
-        if (eventSource) {
-            eventSource.close();
-            log("🔌 Desconectado manualmente.");
+        if (eventSource) { eventSource.close(); logSSE("❌ Conexão encerrada manualmente.", "#888"); }
+    }
+
+    function limparLogSSE() {
+        document.getElementById("logSSE").innerHTML = "<span style='color: #888;'>Tela limpa. Aguardando novas mensagens...</span>";
+    }
+
+    function resetarEBucarHistorico() {
+        document.getElementById("listaHistorico").innerHTML = "";
+        currentPage = 0;
+        carregarHistorico();
+    }
+
+    function limparHistorico() {
+        document.getElementById("listaHistorico").innerHTML = "<div style='padding: 20px; color: #999; text-align: center;'>Digite um ID e clique em buscar...</div>";
+        document.getElementById("containerLoadMore").style.display = "none";
+        currentPage = 0;
+    }
+
+    async function carregarHistorico() {
+        const id = document.getElementById("customerIdHistory").value;
+        const container = document.getElementById("listaHistorico");
+        const btnMore = document.getElementById("containerLoadMore");
+
+        if (!id) return alert("ID de pesquisa necessário");
+
+        try {
+            const response = await fetch(`http://localhost:8084/api/v1/notifications/history/${id}?page=${currentPage}&size=${pageSize}`);
+            const data = await response.json();
+
+            if (data.content.length === 0 && currentPage === 0) {
+                container.innerHTML = "<div style='padding: 20px; text-align: center;'>Nenhum histórico encontrado para este ID.</div>";
+                btnMore.style.display = "none";
+                return;
+            }
+
+            if (currentPage === 0) container.innerHTML = "";
+
+            data.content.forEach(item => {
+                const tagClass = item.delivered ? 'tag-ok' : 'tag-fail';
+                const tagText = item.delivered ? 'Entregue' : 'Falhou';
+                const dateBR = formatarDataBR(item.sentAt); // Formata a data do banco
+
+                container.innerHTML += `
+                    <div class="history-item">
+                        <span class="tag ${tagClass}">${tagText}</span>
+                        <div style="flex-grow: 1;">
+                            <div style="font-weight: 600; color: #333;">${item.message}</div>
+                            <small style="color: #999;">Data do evento: ${dateBR}</small>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (!data.last) {
+                btnMore.style.display = "block";
+                currentPage++;
+            } else {
+                btnMore.style.display = "none";
+            }
+
+        } catch (e) {
+            alert("Erro ao conectar com o serviço de histórico.");
         }
     }
-
-    function log(msg) {
-        const div = document.getElementById("mensagens");
-        const time = new Date().toLocaleTimeString();
-        div.innerHTML += `[${time}] ${msg}<br>`;
-        div.scrollTop = div.scrollHeight; // Rola para o final
-    }
 </script>
-
 </body>
 </html>

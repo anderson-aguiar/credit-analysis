@@ -36,13 +36,16 @@ public class PublishDecisionWorker {
                         String fraudReason = (String) externalTask.getVariable("fraudReason");
 
                         // Calcular decisão
-                        String decision;
-                        if (isFraud != null && isFraud) {
-                            decision = "REJECTED";
-                        } else if (score != null && score >= 700) {
-                            decision = "APPROVED";
-                        } else {
-                            decision = "MANUAL_REVIEW";
+                        String decision = (String) externalTask.getVariable("decision");
+
+                        if (decision == null) { // Se não houver decisão manual, calcula automaticamente
+                            if (isFraud != null && isFraud) {
+                                decision = "REJECTED";
+                            } else if (score != null && score >= 700) {
+                                decision = "APPROVED";
+                            } else {
+                                decision = "MANUAL_REVIEW";
+                            }
                         }
 
                         // Montar evento

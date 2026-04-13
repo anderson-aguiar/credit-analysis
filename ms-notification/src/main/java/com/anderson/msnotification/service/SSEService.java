@@ -3,11 +3,13 @@ package com.anderson.msnotification.service;
 import com.anderson.msnotification.config.NotificationMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -15,9 +17,11 @@ public class SSEService {
     private static final Logger log = LoggerFactory.getLogger(SSEService.class);
     private final NotificationMetrics metrics;
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final NotificationService notificationService;
 
-    public SSEService(NotificationMetrics metrics) {
+    public SSEService(NotificationMetrics metrics, @Lazy NotificationService notificationService) {
         this.metrics = metrics;
+        this.notificationService = notificationService;
     }
 
     public SseEmitter subscribe(String customerId) {
@@ -44,6 +48,7 @@ public class SSEService {
             cleanup.run();
         }
 
+        CompletableFuture.runAsync(() -> notificationService.sendPendingNotifications(customerId));
         return emitter;
     }
 
@@ -63,7 +68,7 @@ public class SSEService {
         } catch (IOException e) {
             log.error("Erro ao enviar SSE para cliente {}: {}", customerId, e.getMessage());
             metrics.incrementFailed();
-            // A limpeza será disparada pelo onError/onCompletion do emitter
+
             return false;
         }
     }

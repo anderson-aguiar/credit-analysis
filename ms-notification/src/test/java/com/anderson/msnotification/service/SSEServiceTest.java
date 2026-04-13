@@ -12,13 +12,14 @@ import static org.mockito.Mockito.verify;
 class SSEServiceTest {
 
     private SSEService sseService;
-    private NotificationMetrics metrics; // Mock das métricas
+    private NotificationMetrics metrics;
+    private NotificationService notificationService;// Mock das métricas
 
     @BeforeEach
     void setUp() {
         // Criamos um mock para não precisar configurar o MeterRegistry real
         metrics = Mockito.mock(NotificationMetrics.class);
-        sseService = new SSEService(metrics);
+        sseService = new SSEService(metrics, notificationService);
     }
 
     @Test
