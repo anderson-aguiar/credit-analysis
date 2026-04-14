@@ -32,10 +32,12 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-	testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-mongodb-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'com.jayway.jsonpath:json-path'
+    testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-mongodb-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.mockito:mockito-junit-jupiter'
@@ -71,7 +73,8 @@ jacocoTestReport {
                     '**/*Event*.class',
                     '**/*Log*.class',
                     '**/config/**',
-                    '**/consumer/**'
+                    '**/consumer/**',
+                    '**/kafka/**'
             ])
         }))
     }

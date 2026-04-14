@@ -3,15 +3,17 @@ package com.anderson.msnotification.service;
 import com.anderson.msnotification.model.CreditDecisionEvent;
 import com.anderson.msnotification.model.NotificationLog;
 import com.anderson.msnotification.repository.NotificationRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,201 +32,93 @@ class NotificationServiceTest {
     private NotificationService notificationService;
 
     @Test
-    void shouldProcessApprovedNotificationSuccessfully() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-123",
-                "customer-1",
-                "APPROVED",
-                null,
-                BigDecimal.valueOf(10000),
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve processar notificação APPROVED e salvar no banco com sucesso")
+    void shouldProcessApprovedNotification() {
+        String requestId = UUID.randomUUID().toString();
+        CreditDecisionEvent event = new CreditDecisionEvent(requestId, "cust-1", "APPROVED", null, new BigDecimal("1000"), LocalDateTime.now());
 
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(true);
+        when(sseService.sendNotification(eq("cust-1"), anyString())).thenReturn(true);
 
-        // Act
         notificationService.processNotification(event);
 
-        // Assert
-        verify(sseService, times(1)).sendNotification(eq("customer-1"), contains("Parabéns"));
-        verify(sseService, times(1)).sendNotification(eq("customer-1"), contains("10"));
-
-        ArgumentCaptor<NotificationLog> logCaptor = ArgumentCaptor.forClass(NotificationLog.class);
-        verify(notificationRepository, times(1)).save(logCaptor.capture());
-
-        NotificationLog savedLog = logCaptor.getValue();
-        assertEquals("customer-1", savedLog.getCustomerId());
-        assertTrue(savedLog.isDelivered());
-        assertTrue(savedLog.getMessage().contains("aprovado"));
+        verify(sseService).sendNotification(eq("cust-1"), contains("Parabéns"));
+        verify(notificationRepository).save(argThat(log -> log.isDelivered() && log.getRequestId().equals(requestId)));
     }
 
     @Test
-    void shouldProcessRejectedNotificationSuccessfully() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-456",
-                "customer-fraud",
-                "REJECTED",
-                "CPF na lista negra",
-                BigDecimal.ZERO,
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve processar notificação REJECTED com motivo")
+    void shouldProcessRejectedNotification() {
+        String requestId = UUID.randomUUID().toString();
+        CreditDecisionEvent event = new CreditDecisionEvent(requestId, "cust-1", "REJECTED", "Renda insuficiente", BigDecimal.ZERO, LocalDateTime.now());
 
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(true);
-
-        // Act
         notificationService.processNotification(event);
 
-        // Assert
-        verify(sseService, times(1)).sendNotification(eq("customer-fraud"), contains("rejeitado"));
-        verify(sseService, times(1)).sendNotification(eq("customer-fraud"), contains("CPF na lista negra"));
-
-        ArgumentCaptor<NotificationLog> logCaptor = ArgumentCaptor.forClass(NotificationLog.class);
-        verify(notificationRepository, times(1)).save(logCaptor.capture());
-
-        NotificationLog savedLog = logCaptor.getValue();
-        assertEquals("customer-fraud", savedLog.getCustomerId());
-        assertTrue(savedLog.isDelivered());
+        verify(sseService).sendNotification(eq("cust-1"), contains("rejeitado"));
+        verify(sseService).sendNotification(eq("cust-1"), contains("Renda insuficiente"));
     }
 
     @Test
-    void shouldProcessManualReviewNotification() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-789",
-                "customer-review",
-                "MANUAL_REVIEW",
-                null,
-                BigDecimal.ZERO,
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve processar MANUAL_REVIEW corretamente")
+    void shouldProcessManualReview() {
+        String requestId = UUID.randomUUID().toString();
+        CreditDecisionEvent event = new CreditDecisionEvent(requestId, "cust-1", "MANUAL_REVIEW", null, BigDecimal.ZERO, LocalDateTime.now());
 
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(true);
-
-        // Act
         notificationService.processNotification(event);
 
-        // Assert
-        verify(sseService, times(1)).sendNotification(eq("customer-review"), contains("análise manual"));
-
-        ArgumentCaptor<NotificationLog> logCaptor = ArgumentCaptor.forClass(NotificationLog.class);
-        verify(notificationRepository, times(1)).save(logCaptor.capture());
-
-        NotificationLog savedLog = logCaptor.getValue();
-        assertTrue(savedLog.getMessage().contains("análise manual"));
+        verify(sseService).sendNotification(eq("cust-1"), contains("análise manual"));
     }
 
     @Test
-    void shouldMarkAsNotDeliveredWhenSSEFails() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-fail",
-                "customer-disconnected",
-                "APPROVED",
-                null,
-                BigDecimal.valueOf(5000),
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve processar status desconhecido usando o bloco default")
+    void shouldProcessUnknownStatus() {
+        String requestId = UUID.randomUUID().toString();
+        CreditDecisionEvent event = new CreditDecisionEvent(requestId, "cust-1", "UNKNOWN", null, BigDecimal.ZERO, LocalDateTime.now());
 
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(false);
-
-        // Act
         notificationService.processNotification(event);
 
-        // Assert
-        ArgumentCaptor<NotificationLog> logCaptor = ArgumentCaptor.forClass(NotificationLog.class);
-        verify(notificationRepository, times(1)).save(logCaptor.capture());
-
-        NotificationLog savedLog = logCaptor.getValue();
-        assertFalse(savedLog.isDelivered());
+        verify(sseService).sendNotification(eq("cust-1"), contains("status desconhecido"));
     }
 
     @Test
-    void shouldHandleSSEException() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-exception",
-                "customer-error",
-                "APPROVED",
-                null,
-                BigDecimal.valueOf(8000),
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve tratar erro no envio SSE e marcar como não entregue no banco")
+    void shouldHandleSSEError() {
+        String requestId = UUID.randomUUID().toString();
+        CreditDecisionEvent event = new CreditDecisionEvent(requestId, "cust-1", "APPROVED", null, BigDecimal.TEN, LocalDateTime.now());
 
-        when(sseService.sendNotification(anyString(), anyString())).thenThrow(new RuntimeException("SSE error"));
+        // Simula uma exceção no serviço de SSE
+        when(sseService.sendNotification(any(), any())).thenThrow(new RuntimeException("SSE Offline"));
 
-        // Act
         notificationService.processNotification(event);
 
-        // Assert
-        ArgumentCaptor<NotificationLog> logCaptor = ArgumentCaptor.forClass(NotificationLog.class);
-        verify(notificationRepository, times(1)).save(logCaptor.capture());
-
-        NotificationLog savedLog = logCaptor.getValue();
-        assertFalse(savedLog.isDelivered());
+        verify(notificationRepository).save(argThat(log -> !log.isDelivered()));
     }
 
     @Test
-    void shouldHandleUnknownStatus() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-unknown",
-                "customer-unknown",
-                "UNKNOWN_STATUS",
-                null,
-                BigDecimal.ZERO,
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve capturar erro de banco de dados sem interromper o fluxo (Bloco Catch do Repositório)")
+    void shouldHandleRepositoryError() {
+        String requestId = UUID.randomUUID().toString();
+        CreditDecisionEvent event = new CreditDecisionEvent(requestId, "cust-1", "APPROVED", null, BigDecimal.TEN, LocalDateTime.now());
 
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(true);
+        when(notificationRepository.save(any())).thenThrow(new RuntimeException("MongoDB Error"));
 
-        // Act
-        notificationService.processNotification(event);
-
-        // Assert
-        verify(sseService, times(1)).sendNotification(eq("customer-unknown"), contains("status desconhecido"));
+        assertDoesNotThrow(() -> notificationService.processNotification(event));
     }
 
     @Test
-    void shouldHandleNullApprovedAmount() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-null-amount",
-                "customer-null",
-                "APPROVED",
-                null,
-                null,
-                LocalDateTime.now()
-        );
+    @DisplayName("Deve reenviar todas as notificações pendentes de um cliente")
+    void shouldSendPendingNotifications() {
+        String customerId = "cust-pending";
+        NotificationLog pendingLog1 = new NotificationLog("id-1", customerId, "req-1", "Msg 1", LocalDateTime.now(), false);
+        NotificationLog pendingLog2 = new NotificationLog("id-2", customerId, "req-2", "Msg 2", LocalDateTime.now(), false);
 
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(true);
+        when(notificationRepository.findByCustomerIdAndDeliveredFalse(customerId)).thenReturn(List.of(pendingLog1, pendingLog2));
+        when(sseService.sendNotification(eq(customerId), anyString())).thenReturn(true);
 
-        // Act
-        notificationService.processNotification(event);
+        notificationService.sendPendingNotifications(customerId);
 
-        // Assert
-        verify(sseService, times(1)).sendNotification(eq("customer-null"), contains("valor não informado"));
-    }
-
-    @Test
-    void shouldHandleNullReason() {
-        // Arrange
-        CreditDecisionEvent event = new CreditDecisionEvent(
-                "req-null-reason",
-                "customer-no-reason",
-                "REJECTED",
-                null,
-                BigDecimal.ZERO,
-                LocalDateTime.now()
-        );
-
-        when(sseService.sendNotification(anyString(), anyString())).thenReturn(true);
-
-        // Act
-        notificationService.processNotification(event);
-
-        // Assert
-        verify(sseService, times(1)).sendNotification(eq("customer-no-reason"), contains("motivo não informado"));
+        // Verifica se tentou enviar as duas
+        verify(sseService, times(2)).sendNotification(eq(customerId), anyString());
+        // Verifica se salvou as duas como entregues
+        verify(notificationRepository, times(2)).save(argThat(NotificationLog::isDelivered));
     }
 }

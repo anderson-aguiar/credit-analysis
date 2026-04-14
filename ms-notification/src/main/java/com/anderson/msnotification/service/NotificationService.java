@@ -56,7 +56,10 @@ public class NotificationService {
     private String customMessage(CreditDecisionEvent event) {
         String status = event.status() != null ? event.status() : "";
 
-        String reqId = event.requestId() != null ? event.requestId().substring(0, 8) : "N/A";
+        String requestId = event.requestId();
+        String reqId = (requestId != null && requestId.length() >= 8)
+                ? requestId.substring(0, 8)
+                : (requestId != null ? requestId : "N/A");
 
         switch (status.toUpperCase()) {
             case "APPROVED" -> {
