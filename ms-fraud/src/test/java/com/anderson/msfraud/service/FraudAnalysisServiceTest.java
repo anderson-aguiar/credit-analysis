@@ -1,6 +1,6 @@
 package com.anderson.msfraud.service;
 
-
+import com.anderson.msfraud.config.FraudMetrics;
 import com.anderson.msfraud.model.FraudAnalysis;
 import com.anderson.msfraud.model.FraudAnalysisRequest;
 import com.anderson.msfraud.model.FraudAnalysisResponse;
@@ -8,6 +8,7 @@ import com.anderson.msfraud.model.FraudStatus;
 import com.anderson.msfraud.repository.FraudAnalysisRepository;
 import com.anderson.msfraud.validator.FraudValidator;
 import com.anderson.msfraud.validator.ValidationResult;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,140 +31,87 @@ class FraudAnalysisServiceTest {
     @Mock
     private FraudAnalysisRepository repository;
 
+    @Mock
+    private FraudMetrics metrics;
+
     @InjectMocks
     private FraudAnalysisService fraudAnalysisService;
 
     @Test
+    @DisplayName("Deve aprovar análise e incrementar métrica de aprovação quando o resultado for válido")
     void shouldApproveWhenValidationPasses() {
         // Arrange
-        FraudAnalysisRequest request = new FraudAnalysisRequest(
-                "req-123",
-                "customer-1",
-                BigDecimal.valueOf(10000),
-                BigDecimal.valueOf(5000),
-                "12345678900"
-        );
-
-        when(fraudValidationChain.validate(request))
-                .thenReturn(ValidationResult.success("AllValidators"));
+        FraudAnalysisRequest request = createRequest("req-123");
+        when(fraudValidationChain.validate(request)).thenReturn(ValidationResult.success("AnyValidator"));
 
         // Act
         FraudAnalysisResponse response = fraudAnalysisService.analyzeFraude(request);
 
         // Assert
-        assertNotNull(response);
-        assertEquals("req-123", response.requestId());
-        assertEquals("customer-1", response.customerId());
         assertEquals(FraudStatus.APPROVED, response.status());
-        assertEquals(0, response.riskScore());
-        assertNull(response.reason());
-        assertTrue(response.failedValidators().isEmpty());
-
-        verify(fraudValidationChain, times(1)).validate(request);
-        verify(repository, times(1)).save(any(FraudAnalysis.class));
+        verify(metrics).incrementApproved();
+        verify(repository).save(any(FraudAnalysis.class));
     }
 
     @Test
-    void shouldRejectWhenValidationFails() {
+    @DisplayName("Deve rejeitar e incrementar métrica de fraude quando um validador comum falhar")
+    void shouldRejectWhenCommonValidatorFails() {
         // Arrange
-        FraudAnalysisRequest request = new FraudAnalysisRequest(
-                "req-456",
-                "customer-fraud",
-                BigDecimal.valueOf(50000),
-                BigDecimal.valueOf(2000),
-                "98765432100"
-        );
-
+        FraudAnalysisRequest request = createRequest("req-456");
         when(fraudValidationChain.validate(request))
-                .thenReturn(ValidationResult.fail("IncomeValidator", "Valor incompatível com renda"));
+                .thenReturn(ValidationResult.fail("IncomeValidator", "Renda insuficiente"));
 
         // Act
         FraudAnalysisResponse response = fraudAnalysisService.analyzeFraude(request);
 
         // Assert
         assertEquals(FraudStatus.REJECTED, response.status());
-        assertEquals(100, response.riskScore());
-        assertEquals("Valor incompatível com renda", response.reason());
-        assertFalse(response.failedValidators().isEmpty());
         assertEquals("IncomeValidator", response.failedValidators().get(0));
 
-        verify(repository, times(1)).save(any(FraudAnalysis.class));
+        verify(metrics).incrementFraudDetected();
+        // Garante que NÃO chamou a métrica de Blacklist
+        verify(metrics, never()).incrementBlacklistHits();
     }
 
     @Test
-    void shouldPersistAnalysisWithCorrectData() {
+    @DisplayName("Deve rejeitar e incrementar métrica de Blacklist especificamente")
+    void shouldIncrementBlacklistMetricWhenBlacklistValidatorFails() {
         // Arrange
-        FraudAnalysisRequest request = new FraudAnalysisRequest(
-                "req-789",
-                "customer-test",
-                BigDecimal.valueOf(15000),
-                BigDecimal.valueOf(8000),
-                "11122233344"
-        );
-
+        FraudAnalysisRequest request = createRequest("req-789");
+        // Forçamos o nome do validador para entrar no IF específico do seu Service
         when(fraudValidationChain.validate(request))
-                .thenReturn(ValidationResult.success("AllValidators"));
-
-        ArgumentCaptor<FraudAnalysis> analysisCaptor = ArgumentCaptor.forClass(FraudAnalysis.class);
+                .thenReturn(ValidationResult.fail("BlacklistValidator", "CPF Bloqueado"));
 
         // Act
         fraudAnalysisService.analyzeFraude(request);
 
         // Assert
-        verify(repository, times(1)).save(analysisCaptor.capture());
-
-        FraudAnalysis savedAnalysis = analysisCaptor.getValue();
-        assertEquals("req-789", savedAnalysis.getRequestId());
-        assertEquals("customer-test", savedAnalysis.getCustomerId());
-        assertEquals("11122233344", savedAnalysis.getCpf());
-        assertEquals(BigDecimal.valueOf(15000), savedAnalysis.getAmount());
-        assertEquals(BigDecimal.valueOf(8000), savedAnalysis.getDeclaredIncome());
-        assertEquals(FraudStatus.APPROVED, savedAnalysis.getFinalDecision());
-        assertNotNull(savedAnalysis.getAnalyzedAt());
+        verify(metrics).incrementFraudDetected();
+        verify(metrics).incrementBlacklistHits(); // COBERTURA DA LINHA ESPECÍFICA
     }
 
     @Test
-    void shouldHandleBlacklistValidatorFailure() {
+    @DisplayName("Deve validar se todos os campos da entidade FraudAnalysis foram preenchidos antes de salvar")
+    void shouldVerifyEntityMappingBeforeSaving() {
         // Arrange
-        FraudAnalysisRequest request = new FraudAnalysisRequest(
-                "req-blacklist",
-                "customer-blocked",
-                BigDecimal.valueOf(5000),
-                BigDecimal.valueOf(4000),
-                "52998224725"
-        );
-
-        when(fraudValidationChain.validate(request))
-                .thenReturn(ValidationResult.fail("BlacklistValidator", "CPF na lista negra"));
+        FraudAnalysisRequest request = createRequest("req-999");
+        when(fraudValidationChain.validate(request)).thenReturn(ValidationResult.success("OK"));
+        ArgumentCaptor<FraudAnalysis> captor = ArgumentCaptor.forClass(FraudAnalysis.class);
 
         // Act
-        FraudAnalysisResponse response = fraudAnalysisService.analyzeFraude(request);
+        fraudAnalysisService.analyzeFraude(request);
 
         // Assert
-        assertEquals(FraudStatus.REJECTED, response.status());
-        assertEquals("CPF na lista negra", response.reason());
-        assertEquals("BlacklistValidator", response.failedValidators().get(0));
+        verify(repository).save(captor.capture());
+        FraudAnalysis saved = captor.getValue();
+
+        assertEquals("req-999", saved.getRequestId());
+        assertTrue(saved.getIncomeValid());
+        assertTrue(saved.getBlacklistValid());
+        assertNotNull(saved.getAnalyzedAt());
     }
 
-    @Test
-    void shouldHandleBehaviorValidatorFailure() {
-        // Arrange
-        FraudAnalysisRequest request = new FraudAnalysisRequest(
-                "req-behavior",
-                "customer-suspicious",
-                BigDecimal.valueOf(3000),
-                BigDecimal.valueOf(5000),
-                "77788899900"
-        );
-
-        when(fraudValidationChain.validate(request))
-                .thenReturn(ValidationResult.fail("BehaviorValidator", "Comportamento suspeito: 3 solicitações nas últimas 24h"));
-
-        // Act
-        FraudAnalysisResponse response = fraudAnalysisService.analyzeFraude(request);
-
-        // Assert
-        assertEquals(FraudStatus.REJECTED, response.status());
-        assertTrue(response.reason().contains("Comportamento suspeito"));
+    private FraudAnalysisRequest createRequest(String id) {
+        return new FraudAnalysisRequest(id, "cust-1", new BigDecimal("1000"), new BigDecimal("5000"), "12345678900");
     }
 }

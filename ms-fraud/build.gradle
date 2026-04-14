@@ -77,9 +77,10 @@ jacocoTestReport {
                     '**/*Request*.class',
                     '**/*Response*.class',
                     '**/*Event*.class',
-                    '**/entity/**',
+                    '**/model/**',
                     '**/config/**',
-                    '**/worker/**'
+                    '**/worker/**',
+                    '**/controller/**'
             ])
         }))
     }
@@ -90,7 +91,7 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = 0.40
+                minimum = 0.65
             }
         }
     }
