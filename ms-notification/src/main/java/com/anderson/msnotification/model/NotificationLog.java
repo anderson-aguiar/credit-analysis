@@ -11,19 +11,30 @@ public class NotificationLog {
     @Id
     private String id;
     private String customerId;
+    private String requestId;
     private String message;
     private LocalDateTime sentAt;
     private boolean delivered;
 
     public NotificationLog() {
     }
-    public NotificationLog(String id, String customerId, String message,
+
+    public NotificationLog(String id, String customerId, String requestId, String message,
                            LocalDateTime sentAt, boolean delivered) {
         this.id = id;
         this.customerId = customerId;
         this.message = message;
         this.sentAt = sentAt;
         this.delivered = delivered;
+        this.requestId = requestId;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 
     public String getId() {

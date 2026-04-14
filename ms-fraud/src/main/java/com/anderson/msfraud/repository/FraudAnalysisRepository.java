@@ -11,4 +11,5 @@ public interface FraudAnalysisRepository extends JpaRepository<FraudAnalysis, Lo
     Optional<FraudAnalysis> findByRequestId(String requestId);
 
     List<FraudAnalysis> findByCustomerId(String customerId);
+
 }

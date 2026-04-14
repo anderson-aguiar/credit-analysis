@@ -12,6 +12,11 @@ spring:
           brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
           auto-create-topics: true
           required-acks: 1
+        bindings:
+          processCreditRequest-in-0: #Configuração da DLQ
+            enable-dlq: true
+            dlq-name: credit-requested-dlq
+            dlq-header-context-retention-action: annotate_and_discard
 
       bindings:
         # Consumer: escuta credit-requested
@@ -19,11 +24,25 @@ spring:
           destination: credit-requested
           group: camunda-starter-group
           content-type: application/json
+          consumer:
+            max-attempts: 3 # Tenta 1 original + 2 retentativas
+            back-off-initial-interval: 2000 # Espera 2 seg na primeira falha
+            back-off-multiplier: 2.0        # Dobra o tempo (2s -> 4s)
 
         # Producer: publica credit-decided
         creditDecided-out-0:
           destination: credit-decided
           content-type: application/json
+
+        #Producer: reprocessamento
+        reprocess-out-0:
+          destination: credit-requested
+          content-type: application/json
+
+        # Consumer de reprocessamento
+        reprocessDlq-in-0:
+          destination: credit-requested-dlq
+          group: dlq-reprocessor-group
 
 server:
   port: 8085

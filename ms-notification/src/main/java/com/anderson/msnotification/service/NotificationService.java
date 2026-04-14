@@ -41,6 +41,7 @@ public class NotificationService {
             notificationRepository.save(new NotificationLog(
                     null,
                     event.customerId(),
+                    event.requestId(),
                     message,
                     sentAt,
                     sent
