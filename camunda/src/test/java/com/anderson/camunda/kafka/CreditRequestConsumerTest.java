@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,48 +26,47 @@ class CreditRequestConsumerTest {
 
     @Test
     void shouldProcessCreditRequestEvent() {
-        // Arrange
-        CreditRequestEvent event = new CreditRequestEvent(
-                "req-123",
-                "customer-1",
-                BigDecimal.valueOf(10000),
-                12,
-                "PERSONAL",
-                "12345678900",
-                BigDecimal.valueOf(5000),
-                LocalDateTime.now()
-        );
-
+        CreditRequestEvent event = createEvent("req-123");
         Consumer<CreditRequestEvent> consumer = creditRequestConsumer.processCreditRequest();
 
-        // Act
         consumer.accept(event);
 
-        // Assert
         verify(camundaProcessService, times(1)).startCreditProcess(event);
     }
 
     @Test
-    void shouldHandleMultipleEvents() {
+    void shouldThrowExceptionWhenCamundaFails() {
         // Arrange
-        CreditRequestEvent event1 = new CreditRequestEvent(
-                "req-1", "customer-1", BigDecimal.valueOf(5000),
-                12, "PERSONAL", "11111111111", BigDecimal.valueOf(3000), LocalDateTime.now()
-        );
+        CreditRequestEvent event = createEvent("req-error");
 
-        CreditRequestEvent event2 = new CreditRequestEvent(
-                "req-2", "customer-2", BigDecimal.valueOf(8000),
-                24, "VEHICLE", "22222222222", BigDecimal.valueOf(6000), LocalDateTime.now()
-        );
+        doThrow(new RuntimeException("Camunda Offline"))
+                .when(camundaProcessService).startCreditProcess(any());
 
         Consumer<CreditRequestEvent> consumer = creditRequestConsumer.processCreditRequest();
 
-        // Act
-        consumer.accept(event1);
-        consumer.accept(event2);
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> {
+            consumer.accept(event);
+        });
+    }
 
-        // Assert
-        verify(camundaProcessService, times(1)).startCreditProcess(event1);
-        verify(camundaProcessService, times(1)).startCreditProcess(event2);
+    @Test
+    void shouldVerifyEventData() {
+        LocalDateTime now = LocalDateTime.now();
+        CreditRequestEvent event = new CreditRequestEvent(
+                "req-1", "cust-1", BigDecimal.TEN, 12, "PERSONAL", "123", BigDecimal.ONE, now
+        );
+
+        assertEquals("req-1", event.requestId());
+        assertEquals("PERSONAL", event.purpose());
+        assertNotNull(event.timestamp());
+    }
+
+      private CreditRequestEvent createEvent(String id) {
+        return new CreditRequestEvent(
+                id, "customer-1", BigDecimal.valueOf(10000),
+                12, "PERSONAL", "12345678900", BigDecimal.valueOf(5000),
+                LocalDateTime.now()
+        );
     }
 }

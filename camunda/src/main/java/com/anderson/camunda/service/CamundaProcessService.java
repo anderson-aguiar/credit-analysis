@@ -45,6 +45,7 @@ public class CamundaProcessService {
             log.info("Process started successfully: {}", response);
         } catch (Exception e) {
             log.error("Error starting Camunda process for requestId: {}", event.requestId(), e);
+            throw e;
         }
     }
     private Map<String, Object> createVariable(Object value, String type) {
