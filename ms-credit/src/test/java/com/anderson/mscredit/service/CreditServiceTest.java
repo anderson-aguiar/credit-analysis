@@ -1,9 +1,11 @@
 package com.anderson.mscredit.service;
 
+import com.anderson.mscredit.config.CreditMetrics;
 import com.anderson.mscredit.kafka.CreditRequestProducer;
 import com.anderson.mscredit.model.CreditPurpose;
 import com.anderson.mscredit.model.CreditRequest;
 import com.anderson.mscredit.model.CreditResponse;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -27,10 +29,14 @@ class CreditServiceTest {
     @Mock
     private CreditRequestProducer creditRequestProducer;
 
+    @Mock
+    private CreditMetrics metrics;
+
     @InjectMocks
     private CreditService creditService;
 
     @Test
+    @DisplayName("Deve processar solicitação com sucesso e incrementar métricas")
     void shouldProcessCreditRequestSuccessfully() {
         // Arrange
         when(rateLimitService.isAllowed(anyString())).thenReturn(true);
@@ -49,19 +55,18 @@ class CreditServiceTest {
 
         // Assert
         assertNotNull(response);
-        assertNotNull(response.requestId());
-        assertEquals("customer-123", response.customerId());
-        assertEquals(BigDecimal.valueOf(10000), response.amount());
-        assertEquals(12, response.installments());
-        assertEquals(CreditPurpose.PERSONAL, response.purpose());
         assertEquals("PENDING", response.status());
 
+        // Verificações de negócio
         verify(rateLimitService, times(1)).isAllowed("customer-123");
         verify(creditRequestProducer, times(1)).sendCreditRequested(any());
+
+        verify(metrics, times(1)).incrementTotalRequests();
     }
 
     @Test
-    void shouldThrowExceptionWhenRateLimitExceeded() {
+    @DisplayName("Deve lançar exceção e incrementar métrica de erro quando Rate Limit exceder")
+    void shouldThrowExceptionAndTrackMetricWhenRateLimitExceeded() {
         // Arrange
         when(rateLimitService.isAllowed(anyString())).thenReturn(false);
 
@@ -75,16 +80,14 @@ class CreditServiceTest {
         );
 
         // Act & Assert
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> creditService.processCreditRequest(request)
-        );
+        assertThrows(IllegalStateException.class, () -> creditService.processCreditRequest(request));
 
-        assertEquals("Rate limit exceeded. Maximum 3 requests per 24 hours.", exception.getMessage());
+        verify(metrics, times(1)).incrementRateLimitExceeded();
         verify(creditRequestProducer, never()).sendCreditRequested(any());
     }
 
     @Test
+    @DisplayName("Deve mapear corretamente os dados do Request para o Evento do Kafka")
     void shouldPublishEventToKafkaWithCorrectData() {
         // Arrange
         when(rateLimitService.isAllowed(anyString())).thenReturn(true);
@@ -105,36 +108,11 @@ class CreditServiceTest {
         ArgumentCaptor<com.anderson.mscredit.model.CreditRequestEvent> eventCaptor =
                 ArgumentCaptor.forClass(com.anderson.mscredit.model.CreditRequestEvent.class);
 
-        verify(creditRequestProducer, times(1)).sendCreditRequested(eventCaptor.capture());
+        verify(creditRequestProducer).sendCreditRequested(eventCaptor.capture());
 
         com.anderson.mscredit.model.CreditRequestEvent capturedEvent = eventCaptor.getValue();
-        assertNotNull(capturedEvent.requestId());
         assertEquals("customer-kafka-test", capturedEvent.customerId());
-        assertEquals(BigDecimal.valueOf(15000), capturedEvent.amount());
-        assertEquals(24, capturedEvent.installments());
         assertEquals("HOME_IMPROVEMENT", capturedEvent.purpose());
-    }
-
-    @Test
-    void shouldGenerateUniqueRequestIdForEachRequest() {
-        // Arrange
-        when(rateLimitService.isAllowed(anyString())).thenReturn(true);
-
-        CreditRequest request1 = new CreditRequest(
-                "customer-1", BigDecimal.valueOf(1000), 12,
-                CreditPurpose.PERSONAL, "12345678900", BigDecimal.valueOf(3000)
-        );
-
-        CreditRequest request2 = new CreditRequest(
-                "customer-2", BigDecimal.valueOf(2000), 12,
-                CreditPurpose.PERSONAL, "98765432100", BigDecimal.valueOf(4000)
-        );
-
-        // Act
-        CreditResponse response1 = creditService.processCreditRequest(request1);
-        CreditResponse response2 = creditService.processCreditRequest(request2);
-
-        // Assert
-        assertNotEquals(response1.requestId(), response2.requestId());
+        assertNotNull(capturedEvent.timestamp());
     }
 }

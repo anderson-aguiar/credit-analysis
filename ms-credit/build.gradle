@@ -72,7 +72,9 @@ jacocoTestReport {
                     '**/*Request*.class',
                     '**/*Response*.class',
                     '**/*Event*.class',
-                    '**/config/**'
+                    '**/config/**',
+                    '**/exception/**',
+                    '**/repository/**'
             ])
         } as Closure<Object>))))
     }

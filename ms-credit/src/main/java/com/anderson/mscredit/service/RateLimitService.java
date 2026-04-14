@@ -21,7 +21,10 @@ public class RateLimitService {
 
     public boolean isAllowed(String customerId) {
         Long count = rateLimitRepository.getRequestCount(customerId);
-        if (count == 0) {
+
+        long currentCount = (count != null) ? count : 0L;
+
+        if (currentCount == 0) {
             rateLimitRepository.incrementRequestCount(customerId);
             rateLimitRepository.setExpiration(customerId, windowHour);
             return true;
