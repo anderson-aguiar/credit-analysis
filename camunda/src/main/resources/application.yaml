@@ -4,6 +4,8 @@ spring:
 
   # Kafka (Spring Cloud Stream)
   cloud:
+    function:
+      definition: processCreditRequest;reprocessDlq
     stream:
       default-binder: kafka
 

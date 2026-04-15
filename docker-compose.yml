@@ -125,6 +125,16 @@ services:
     networks:
       - credit-network
 
+  # Interface redis
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+    ports:
+      - "8001:5540"
+    networks:
+      - credit-network
+
+
 volumes:
   mongodb_data:
   postgres_data:

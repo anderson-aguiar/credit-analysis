@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FraudAnalysisService {
@@ -31,6 +32,15 @@ public class FraudAnalysisService {
     }
 
     public FraudAnalysisResponse analyzeFraude(FraudAnalysisRequest request) {
+        Optional<FraudAnalysis> existing = repository.findByRequestId(request.requestId());
+        if (existing.isPresent()) {
+            log.info("Análise já processada para o requestId: {}. Retornando cache do banco.", request.requestId());
+            FraudAnalysis fa = existing.get();
+            return new FraudAnalysisResponse(
+                    fa.getRequestId(), fa.getCustomerId(), fa.getFinalDecision(),
+                    fa.getRiskScore(), fa.getReason(), List.of(), fa.getAnalyzedAt()
+            );
+        }
         log.info("Analyzing fraud for request: {}", request.requestId());
 
         ValidationResult result = fraudValidationChain.validate(request);

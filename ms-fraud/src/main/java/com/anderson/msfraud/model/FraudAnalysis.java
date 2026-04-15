@@ -12,7 +12,7 @@ public class FraudAnalysis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String requestId;
 
     @Column(nullable = false)
