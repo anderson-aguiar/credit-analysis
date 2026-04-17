@@ -71,27 +71,34 @@ Na sua IDE, execute a classe principal de cada serviço na ordem sugerida:
 
 ## 🧪 Como Testar (Fluxo E2E)
 
-### 1. Monitoramento em Tempo Real
-Abra o arquivo `index.html` (Front-end de auditoria) no seu navegador e conecte-se com o ID: `customer-vip-001`.
+Para facilitar os testes, disponibilizei uma **Collection do Postman** com todos os cenários prontos (Aprovação, Rejeição por Renda, Blacklist e Rate Limit).
 
-### 2. Disparar Solicitação (Postman)
-Envie um `POST` para `http://localhost:8081/api/v1/credit-requests`:
+### 1. Importar a Collection
+1. No Postman, clique em **Import**.
+2. Selecione o arquivo `credit-analysis.postman_collection` localizado na raiz deste projeto.
 
-```json
-{
-  "customerId": "customer-vip-001",
-  "amount": 10000.00,
-  "installments": 24,
-  "purpose": "PERSONAL",
-  "cpf": "32145322040",
-  "declaredIncome": 13000.00
-}
-```
-### 3. Validar Resultados
-- **SSE:** O resultado da análise aparecerá instantaneamente no monitor HTML.
-- **Auditoria:** Pesquise pelo ID no histórico do HTML e baixe o Laudo Técnico em PDF gerado pelo motor de fraude.
-- **Métricas:** Acesse `http://localhost:3000` (credenciais: `admin`/`admin`) para visualizar os dashboards no Grafana.
+### 2. Monitoramento em Tempo Real
+Antes de disparar as requisições:
+1. Abra o arquivo `index.html` no seu navegador.
+2. Digite o ID `customer-vip-001` e clique em **Conectar SSE**.
 
+### 3. Execução dos Cenários
+Na collection importada, você encontrará os seguintes cenários pré-configurados para validar as regras de negócio:
+
+*   **APROVADO VIP:** Fluxo de sucesso total (Score alto e Renda compatível).
+*   **REJEITADO VIP SCORE ALTO:** Demonstra que, mesmo com score excelente, o motor de fraude pode barrar por inconsistência de renda.
+*   **REJEITADO RENDA:** Validação de segurança baseada na relação valor solicitado vs. renda declarada.
+*   **BLOQUEADO BLOCKLIST:** Validação crítica de segurança consultando o banco de dados PostgreSQL.
+*   **ANALISE MANUAL:** Demonstração da `User Task` do Camunda para propostas que exigem verificação humana.
+*   **CACHE HIT REDIS:** Teste de performance para validar a persistência e recuperação de scores no Redis.
+*   **CACHE RATE LIMIT:** Teste de resiliência para validar o bloqueio de múltiplas requisições (Segurança/Anti-Spam).
+
+### 4. Validação de Auditoria
+Após as execuções:
+*   **Relatório PDF:** No Monitor HTML, pesquise o histórico do cliente e clique em **📄 Relatório Fraude** para visualizar o laudo técnico gerado pelo `ms-fraud`.
+*   **Métricas:** Acesse o Grafana em `http://localhost:3000` para validar os dashboards.
+
+---
 ![Dashboard Grafana](assets/grafana.png)
 ---
 

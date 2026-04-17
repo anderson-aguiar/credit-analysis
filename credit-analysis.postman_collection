@@ -1,0 +1,222 @@
+{
+  "info": {
+    "_postman_id": "c61e0750-8ff2-4928-8467-4685f2dcb54f",
+    "name": "Credit-analysis",
+    "description": "Request para testes ao projeto MVP do curso avançado de Java.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "25480468",
+    "_collection_link": "https://go.postman.co/collection/25480468-c61e0750-8ff2-4928-8467-4685f2dcb54f?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "APROVADO VIP",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"customerId\": \"customer-vip-001\",\r\n  \"amount\": 1000.00,\r\n  \"installments\": 12,\r\n  \"purpose\": \"PERSONAL\",\r\n  \"cpf\": \"32145322040\",\r\n  \"declaredIncome\": 13000.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "REJEITADO VIP SCORE ALTO",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"customerId\": \"customer-vip-001\",\r\n  \"amount\": 10000.00,\r\n  \"installments\": 24,\r\n  \"purpose\": \"PERSONAL\",\r\n  \"cpf\": \"32145322040\",\r\n  \"declaredIncome\": 13000.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "REJEITADO RENDA",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"customerId\": \"customer-new-001\",\r\n  \"amount\": 40000.00,\r\n  \"installments\": 48,\r\n  \"purpose\": \"VEHICLE\",\r\n  \"cpf\": \"08375435010\",\r\n  \"declaredIncome\": 10000.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "BLOQUEADO BLACKLIST",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"customerId\": \"customer-blocked-001\",\r\n  \"amount\": 2000.00,\r\n  \"installments\": 10,\r\n  \"purpose\": \"OTHER\",\r\n  \"cpf\": \"52998224725\",\r\n  \"declaredIncome\": 25000.00\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ANALISE MANUAL",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"customerId\": \"customer-new-004\",\r\n    \"amount\": 1200,\r\n    \"installments\": 12,\r\n    \"purpose\": \"PERSONAL\",\r\n    \"cpf\": \"73656157053\",\r\n    \"declaredIncome\": 5000\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CACHE HIT REDIS",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"customerId\": \"customer-vip-001\",\r\n  \"amount\": 1000.00,\r\n  \"installments\": 24,\r\n  \"purpose\": \"PERSONAL\",\r\n  \"cpf\": \"32145322040\",\r\n  \"declaredIncome\": 13000.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CACHE RATE LIMIT",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"customerId\": \"customer-vip-001\",\r\n  \"amount\": 10000.00,\r\n  \"installments\": 24,\r\n  \"purpose\": \"EDUCATION\",\r\n  \"cpf\": \"32145322040\",\r\n  \"declaredIncome\": 13000.00\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/v1/credit-requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "v1",
+            "credit-requests"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
